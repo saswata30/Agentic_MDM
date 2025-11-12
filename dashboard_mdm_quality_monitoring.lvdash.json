@@ -1,0 +1,1157 @@
+{
+  "datasets": [
+    {
+      "name": "ds_security_master_summary",
+      "displayName": "Security Master Summary (KPIs)",
+      "queryLines": [
+        "SELECT total_securities, golden_records_created_last_30d FROM demo_generator.saswata_sengupta_agenticmdm.gold_security_master_summary "
+      ]
+    },
+    {
+      "name": "ds_open_identifier_conflicts",
+      "displayName": "Open Identifier Conflicts (Latest KPI)",
+      "queryLines": [
+        "SELECT open_identifier_conflicts_latest FROM demo_generator.saswata_sengupta_agenticmdm.gold_open_identifier_conflicts_latest "
+      ]
+    },
+    {
+      "name": "ds_exposure_impact_today_emea",
+      "displayName": "Exposure Impact (EMEA Today KPI)",
+      "queryLines": [
+        "SELECT CAST(MAX(`date`) AS DATE) AS latest_date, 'EMEA' AS region, SUM(CASE WHEN `region`='EMEA' AND `date` = (SELECT MAX(`date`) FROM demo_generator.saswata_sengupta_agenticmdm.gold_exposure_impact) THEN `misclassified_exposure_usd` ELSE 0 END) AS emea_misclassified_exposure_usd_today FROM demo_generator.saswata_sengupta_agenticmdm.gold_exposure_impact "
+      ]
+    },
+    {
+      "name": "ds_quality_daily",
+      "displayName": "Master Quality Timeseries (Daily)",
+      "queryLines": [
+        "SELECT date, region, sub_product, identifier_conflict_events, duplicate_candidates, adr_etf_mapping_issues FROM demo_generator.saswata_sengupta_agenticmdm.gold_master_quality_timeseries ORDER BY date, region, sub_product "
+      ]
+    },
+    {
+      "name": "ds_quality_weekly",
+      "displayName": "Master Quality Weekly Rollup",
+      "queryLines": [
+        "SELECT week_start, region, sub_product, weekly_identifier_conflicts, weekly_duplicate_candidates, weekly_mapping_issues, COALESCE(weekly_duplicate_candidates,0)+COALESCE(weekly_mapping_issues,0) AS total_weekly_issues FROM demo_generator.saswata_sengupta_agenticmdm.gold_master_quality_weekly ORDER BY week_start, region, sub_product "
+      ]
+    },
+    {
+      "name": "ds_vendor_change_log",
+      "displayName": "Vendor Change Log",
+      "queryLines": [
+        "SELECT change_date, vendor, change_type, scope_region, module, notes, error_codes FROM demo_generator.saswata_sengupta_agenticmdm.gold_vendor_change_log ORDER BY change_date "
+      ]
+    },
+    {
+      "name": "ds_lineage_completeness",
+      "displayName": "Lineage Completeness Timeseries",
+      "queryLines": [
+        "SELECT date, region, sub_product, lineage_completeness_pct FROM demo_generator.saswata_sengupta_agenticmdm.gold_lineage_completeness_timeseries ORDER BY date, region, sub_product "
+      ]
+    },
+    {
+      "name": "ds_exposure_impact_cumulative",
+      "displayName": "Exposure Impact Cumulative",
+      "queryLines": [
+        "SELECT date, region, sub_product, running_total_misclassified_usd FROM demo_generator.saswata_sengupta_agenticmdm.gold_exposure_impact_cumulative ORDER BY date, region, sub_product "
+      ]
+    },
+    {
+      "name": "ds_holdings_sector",
+      "displayName": "Holdings Sector (Filter Source)",
+      "queryLines": [
+        "SELECT date, region, sub_product, sector_code FROM demo_generator.saswata_sengupta_agenticmdm.silver_holdings_report ORDER BY date, region, sub_product, sector_code "
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "mdm_quality_monitoring",
+      "displayName": "MDM Quality, Lineage, and Exposure Impact",
+      "layout": [
+        {
+          "widget": {
+            "name": "header_intro",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# MDM Quality, Lineage, and Exposure Impact\n",
+                "Executive monitoring of master data quality, identifier alignment, ADR/share class mapping, vendor change alignment, lineage completeness, and downstream exposure impact. The dashboard highlights the late-August spike, the 2025-09-05 rule fix, and normalization thereafter.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "total_securities_counter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_security_master_summary",
+                  "fields": [
+                    {
+                      "name": "sum(total_securities)",
+                      "expression": "SUM(`total_securities`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(total_securities)",
+                  "displayName": "Total Securities (Global Scale)",
+                  "format": {
+                    "type": "number",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Total Securities in Master",
+                "showTitle": true,
+                "description": "Distinct active securities managed in the golden master.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "golden_records_30d_counter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_security_master_summary",
+                  "fields": [
+                    {
+                      "name": "sum(golden_records_created_last_30d)",
+                      "expression": "SUM(`golden_records_created_last_30d`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(golden_records_created_last_30d)",
+                  "displayName": "Golden Records Created (Last 30 Days)",
+                  "format": {
+                    "type": "number",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Golden Records Created (Last 30 Days)",
+                "showTitle": true,
+                "description": "Consolidation activity during cleanup and normalization.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "open_identifier_conflicts_today_counter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_open_identifier_conflicts",
+                  "fields": [
+                    {
+                      "name": "sum(open_identifier_conflicts_latest)",
+                      "expression": "SUM(`open_identifier_conflicts_latest`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(open_identifier_conflicts_latest)",
+                  "displayName": "Open Identifier Conflicts (Today)",
+                  "format": {
+                    "type": "number",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Open Identifier Conflicts Today",
+                "showTitle": true,
+                "description": "Unresolved conflicts at current EOD snapshot.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "emea_misclassified_exposure_counter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_exposure_impact_today_emea",
+                  "fields": [
+                    {
+                      "name": "sum(emea_misclassified_exposure_usd_today)",
+                      "expression": "SUM(`emea_misclassified_exposure_usd_today`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(emea_misclassified_exposure_usd_today)",
+                  "displayName": "EMEA Misclassified Exposure ($)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "frame": {
+                "title": "Downstream EMEA Exposure Misclassified ($)",
+                "showTitle": true,
+                "description": "Current estimated misclassified exposure in EMEA portfolios.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 5,
+            "y": 2,
+            "width": 1,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "header_quality_mix",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Quality Spike & Mix Drivers\n",
+                "The spike in conflicts and duplicates begins 2025-08-20, driven by EMEA ADRs and ETFs; normalization follows rule updates on 2025-09-05.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "identifier_conflicts_daily_line",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_quality_daily",
+                  "fields": [
+                    {
+                      "name": "daily(date)",
+                      "expression": "DATE_TRUNC(\"DAY\", `date`)"
+                    },
+                    {
+                      "name": "sum(identifier_conflict_events)",
+                      "expression": "SUM(`identifier_conflict_events`)"
+                    },
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    },
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(date)",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "title": "Date"
+                  },
+                  "displayName": "Date"
+                },
+                "y": {
+                  "fieldName": "sum(identifier_conflict_events)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "title": "Identifier Conflict Events"
+                  },
+                  "displayName": "Identifier Conflicts (Count)"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Identifier Conflict Events (Daily)",
+                "description": "X: date (daily); Y: count of identifier_conflict events. Spike from 2025-08-20; taper after 2025-09-05 fix.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 3,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "weekly_issues_by_region_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_quality_weekly",
+                  "fields": [
+                    {
+                      "name": "weekly(week_start)",
+                      "expression": "DATE_TRUNC(\"WEEK\", `week_start`)"
+                    },
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    },
+                    {
+                      "name": "sum(total_weekly_issues)",
+                      "expression": "SUM(`total_weekly_issues`)"
+                    },
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "weekly(week_start)",
+                  "scale": {
+                    "type": "temporal",
+                    "sort": {
+                      "by": "x"
+                    }
+                  },
+                  "axis": {
+                    "title": "Week Start"
+                  },
+                  "displayName": "Week Start"
+                },
+                "y": {
+                  "fieldName": "sum(total_weekly_issues)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "title": "Duplicates + Mapping Issues (Count)"
+                  },
+                  "displayName": "Total Weekly Issues"
+                },
+                "color": {
+                  "fieldName": "region",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Region"
+                }
+              },
+              "mark": {
+                "layout": "group"
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Duplicates and ADR/ETF Mapping Issues by Region (Weekly)",
+                "description": "Grouped bars by region per week comparing combined duplicates and mapping issues. Filterable by sub_product.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 6,
+            "width": 3,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "vendor_change_log_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_vendor_change_log",
+                  "fields": [
+                    {
+                      "name": "change_date",
+                      "expression": "`change_date`"
+                    },
+                    {
+                      "name": "vendor",
+                      "expression": "`vendor`"
+                    },
+                    {
+                      "name": "change_type",
+                      "expression": "`change_type`"
+                    },
+                    {
+                      "name": "scope_region",
+                      "expression": "`scope_region`"
+                    },
+                    {
+                      "name": "module",
+                      "expression": "`module`"
+                    },
+                    {
+                      "name": "notes",
+                      "expression": "`notes`"
+                    },
+                    {
+                      "name": "error_codes",
+                      "expression": "`error_codes`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "change_date",
+                    "displayName": "Change Date",
+                    "type": "timestamp",
+                    "displayAs": "datetime",
+                    "dateTimeFormat": "yyyy-MM-dd HH:mm"
+                  },
+                  {
+                    "fieldName": "vendor",
+                    "displayName": "Vendor",
+                    "type": "string",
+                    "displayAs": "string"
+                  },
+                  {
+                    "fieldName": "change_type",
+                    "displayName": "Change Type",
+                    "type": "string",
+                    "displayAs": "string"
+                  },
+                  {
+                    "fieldName": "scope_region",
+                    "displayName": "Scope Region",
+                    "type": "string",
+                    "displayAs": "string"
+                  },
+                  {
+                    "fieldName": "module",
+                    "displayName": "Module",
+                    "type": "string",
+                    "displayAs": "string"
+                  },
+                  {
+                    "fieldName": "notes",
+                    "displayName": "Notes",
+                    "type": "string",
+                    "displayAs": "string",
+                    "allowHTML": false
+                  },
+                  {
+                    "fieldName": "error_codes",
+                    "displayName": "Error Codes",
+                    "type": "string",
+                    "displayAs": "string"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Vendor Change Log Alignment Table",
+                "description": "Aligns dated vendor changes with observed quality spikes and rule fixes.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "header_lineage_exposure",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Lineage Completeness & Exposure Impact\n",
+                "Lineage completeness dips during the event and recovers post-fix; cumulative misclassified exposure demonstrates financial impact across regions.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 6,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "lineage_completeness_by_subproduct_line",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_lineage_completeness",
+                  "fields": [
+                    {
+                      "name": "daily(date)",
+                      "expression": "DATE_TRUNC(\"DAY\", `date`)"
+                    },
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    },
+                    {
+                      "name": "avg(lineage_completeness_pct)",
+                      "expression": "AVG(`lineage_completeness_pct`)"
+                    },
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(date)",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "title": "Date"
+                  },
+                  "displayName": "Date"
+                },
+                "y": {
+                  "fieldName": "avg(lineage_completeness_pct)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "axis": {
+                    "title": "Lineage Completeness (%)"
+                  },
+                  "displayName": "Lineage Completeness (%)"
+                },
+                "color": {
+                  "fieldName": "sub_product",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Sub-Product"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Lineage Completeness by Sub-Product",
+                "description": "X: date; Y: lineage_completeness_pct; lines by sub_product (ADR, ETF, ShareClass).",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 3,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "cumulative_misclassified_exposure_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_exposure_impact_cumulative",
+                  "fields": [
+                    {
+                      "name": "daily(date)",
+                      "expression": "DATE_TRUNC(\"DAY\", `date`)"
+                    },
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    },
+                    {
+                      "name": "sum(running_total_misclassified_usd)",
+                      "expression": "SUM(`running_total_misclassified_usd`)"
+                    },
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "daily(date)",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "axis": {
+                    "title": "Date"
+                  },
+                  "displayName": "Date"
+                },
+                "y": {
+                  "fieldName": "sum(running_total_misclassified_usd)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    }
+                  },
+                  "axis": {
+                    "title": "Cumulative Misclassified Exposure ($)"
+                  },
+                  "displayName": "Cumulative Misclassified Exposure ($)"
+                },
+                "color": {
+                  "fieldName": "region",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Region"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Cumulative Misclassified Exposure by Region",
+                "description": "Stacked bars (daily) colored by region, showing build-up and normalization.",
+                "showDescription": true
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 18,
+            "width": 3,
+            "height": 5
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "name": "global_filters",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "filter_date_range",
+            "queries": [
+              {
+                "name": "ds_quality_daily_date",
+                "query": {
+                  "datasetName": "ds_quality_daily",
+                  "fields": [
+                    {
+                      "name": "date",
+                      "expression": "`date`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_lineage_completeness_date",
+                "query": {
+                  "datasetName": "ds_lineage_completeness",
+                  "fields": [
+                    {
+                      "name": "date",
+                      "expression": "`date`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_exposure_cumulative_date",
+                "query": {
+                  "datasetName": "ds_exposure_impact_cumulative",
+                  "fields": [
+                    {
+                      "name": "date",
+                      "expression": "`date`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_quality_weekly_week_start",
+                "query": {
+                  "datasetName": "ds_quality_weekly",
+                  "fields": [
+                    {
+                      "name": "week_start",
+                      "expression": "`week_start`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_vendor_change_log_date",
+                "query": {
+                  "datasetName": "ds_vendor_change_log",
+                  "fields": [
+                    {
+                      "name": "change_date",
+                      "expression": "`change_date`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "date",
+                    "displayName": "Date",
+                    "queryName": "ds_quality_daily_date"
+                  },
+                  {
+                    "fieldName": "date",
+                    "displayName": "Date",
+                    "queryName": "ds_lineage_completeness_date"
+                  },
+                  {
+                    "fieldName": "date",
+                    "displayName": "Date",
+                    "queryName": "ds_exposure_cumulative_date"
+                  },
+                  {
+                    "fieldName": "week_start",
+                    "displayName": "Week Start",
+                    "queryName": "ds_quality_weekly_week_start"
+                  },
+                  {
+                    "fieldName": "change_date",
+                    "displayName": "Change Date",
+                    "queryName": "ds_vendor_change_log_date"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Filter: Date Range"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filter_region",
+            "queries": [
+              {
+                "name": "ds_quality_daily_region",
+                "query": {
+                  "datasetName": "ds_quality_daily",
+                  "fields": [
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_quality_weekly_region",
+                "query": {
+                  "datasetName": "ds_quality_weekly",
+                  "fields": [
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_lineage_completeness_region",
+                "query": {
+                  "datasetName": "ds_lineage_completeness",
+                  "fields": [
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_exposure_cumulative_region",
+                "query": {
+                  "datasetName": "ds_exposure_impact_cumulative",
+                  "fields": [
+                    {
+                      "name": "region",
+                      "expression": "`region`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region",
+                    "queryName": "ds_quality_daily_region"
+                  },
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region",
+                    "queryName": "ds_quality_weekly_region"
+                  },
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region",
+                    "queryName": "ds_lineage_completeness_region"
+                  },
+                  {
+                    "fieldName": "region",
+                    "displayName": "Region",
+                    "queryName": "ds_exposure_cumulative_region"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Filter: Region"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filter_sub_product",
+            "queries": [
+              {
+                "name": "ds_quality_daily_sub_product",
+                "query": {
+                  "datasetName": "ds_quality_daily",
+                  "fields": [
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_quality_weekly_sub_product",
+                "query": {
+                  "datasetName": "ds_quality_weekly",
+                  "fields": [
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_lineage_completeness_sub_product",
+                "query": {
+                  "datasetName": "ds_lineage_completeness",
+                  "fields": [
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "ds_exposure_cumulative_sub_product",
+                "query": {
+                  "datasetName": "ds_exposure_impact_cumulative",
+                  "fields": [
+                    {
+                      "name": "sub_product",
+                      "expression": "`sub_product`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "sub_product",
+                    "displayName": "Sub-Product",
+                    "queryName": "ds_quality_daily_sub_product"
+                  },
+                  {
+                    "fieldName": "sub_product",
+                    "displayName": "Sub-Product",
+                    "queryName": "ds_quality_weekly_sub_product"
+                  },
+                  {
+                    "fieldName": "sub_product",
+                    "displayName": "Sub-Product",
+                    "queryName": "ds_lineage_completeness_sub_product"
+                  },
+                  {
+                    "fieldName": "sub_product",
+                    "displayName": "Sub-Product",
+                    "queryName": "ds_exposure_cumulative_sub_product"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Filter: Sub-Product"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filter_sector",
+            "queries": [
+              {
+                "name": "ds_holdings_sector_code",
+                "query": {
+                  "datasetName": "ds_holdings_sector",
+                  "fields": [
+                    {
+                      "name": "sector_code",
+                      "expression": "`sector_code`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "sector_code",
+                    "displayName": "Sector Code",
+                    "queryName": "ds_holdings_sector_code",
+                    "dataType": "STRING"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Filter: Sector"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "filter_vendor",
+            "queries": [
+              {
+                "name": "ds_vendor_change_log_vendor",
+                "query": {
+                  "datasetName": "ds_vendor_change_log",
+                  "fields": [
+                    {
+                      "name": "vendor",
+                      "expression": "`vendor`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "vendor",
+                    "displayName": "Vendor",
+                    "queryName": "ds_vendor_change_log_vendor"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Filter: Vendor"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 2,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    }
+  }
+}

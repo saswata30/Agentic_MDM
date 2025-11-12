@@ -1,0 +1,77 @@
+{
+  "genie_space": {
+    "config": {
+      "id": "01f0bb66052f112c81ee17e9115c3149",
+      "space_id": "01f0bb66052f112c81ee17e9115c3149",
+      "display_name": "Agentic MDM - Northbridge Demo (AI-BI Genie)",
+      "description": "Genie space for AgenticMDM demo with curated questions and SQL instructions",
+      "warehouse_id": "862f1d757f0424f7",
+      "created_timestamp": 1762470729651,
+      "last_updated_timestamp": 1762470730006,
+      "table_identifiers": [
+        "demo_generator.saswata_sengupta_agenticmdm.gold_master_quality_timeseries",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_master_quality_weekly",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_lineage_completeness_timeseries",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_vendor_change_log",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_exposure_impact",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_exposure_impact_cumulative",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_security_master_summary",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_open_identifier_conflicts_latest",
+        "demo_generator.saswata_sengupta_agenticmdm.silver_security_master_ingest",
+        "demo_generator.saswata_sengupta_agenticmdm.silver_steward_commentary",
+        "demo_generator.saswata_sengupta_agenticmdm.silver_holdings_report",
+        "demo_generator.saswata_sengupta_agenticmdm.silver_etf_constituents",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_date_spine",
+        "demo_generator.saswata_sengupta_agenticmdm.gold_global_filters_bridge"
+      ],
+      "user_id": 7673243576893660,
+      "run_as_type": "VIEWER",
+      "folder_node_internal_name": "tree/4362073218244173"
+    },
+    "sample_questions": [],
+    "benchmarks": [],
+    "instructions": [
+      {
+        "title": "Notes",
+        "content": "This Genie space supports executive and operational analysis of Northbridge\u2019s Agentic MDM event in late August\u2013early September 2025. Use gold tables for KPI-level questions (quality spikes, lineage completeness, vendor alignment, and exposure impact) and silver tables for detailed root-cause and commentary-driven investigations.\n\nData model and business logic:\n- Quality metrics: gold_master_quality_timeseries (daily) and gold_master_quality_weekly (weekly) provide identifier_conflict_events, duplicate_candidates, and adr_etf_mapping_issues segmented by region and sub_product (ADR/ETF/ShareClass). Expect a spike beginning 2025-08-20, with normalization after the 2025-09-05 MDM rule update.\n- Lineage completeness: gold_lineage_completeness_timeseries measures % of records with approved commentary or multi-vendor provenance. Dip during the event with recovery from ~2025-09-10 onward.\n- Vendor changes: gold_vendor_change_log contains dated events (Bloomberg schema refresh 2025-08-19, Moody\u2019s sector reclassification 2025-08-25, Internal MDM rule update 2025-09-05) with modules (Identifiers, ADR Mapping, Sectors) and error codes (MDM-ID-3102, MDM-LIN-2207, MDM-COM-1905).\n- Exposure impact: gold_exposure_impact and gold_exposure_impact_cumulative quantify misclassified exposure ($) where holdings were pre-golden (golden_resolved=false) and sector codes changed post 2025-08-25, segmented by region and sub_product.\n- KPIs: gold_security_master_summary provides total_securities and golden_records_created_last_30d; gold_open_identifier_conflicts_latest gives the latest open conflicts.\n- Detailed context: silver_security_master_ingest includes standardized identifiers, flags (identifier_conflict_flag, adr_mapping_issue_flag), and sub_product; silver_steward_commentary links overrides and rationales to records; silver_holdings_report offers portfolio-level exposures.\n\nData quality considerations:\n- EMEA ADRs and ETFs show higher variance and mapping disputes. Bloomberg EMEA suffixing changes (e.g., .LN, .GR) increased discordance. Moody\u2019s sector taxonomy update introduced reclassification load for EMEA sector ETFs.\n- Minor nulls exist in identifiers like ISIN/SEDOL; rely on pre-aggregated gold tables for fast, consistent answers.\n- Temporal analyses should anchor to date fields and, for weekly views, week_start to align with vendor change timing.\n\nRecommended usage:\n- Start with gold_master_quality_timeseries to quantify the spike, then use gold_vendor_change_log for root-cause alignment.\n- Use gold_lineage_completeness_timeseries to monitor recovery and gold_exposure_impact to estimate financial impact.\n- Drill into silver_steward_commentary joined to silver_security_master_ingest for specific overrides and rationale threads.\n- Apply global filters (region, sub_product, sector) consistently when slicing KPIs.",
+        "instruction_type": "TEXT_INSTRUCTION"
+      },
+      {
+        "title": "Daily Identifier Conflicts vs Baseline",
+        "content": "-- Compare identifier conflicts to baseline across regions and sub_products\nSELECT d.date,\n       q.region,\n       q.sub_product,\n       q.identifier_conflict_events,\n       q.duplicate_candidates,\n       q.adr_etf_mapping_issues\nFROM demo_generator.saswata_sengupta_agenticmdm.gold_master_quality_timeseries q\nJOIN demo_generator.saswata_sengupta_agenticmdm.gold_date_spine d\n  ON q.date = d.date\nWHERE d.date BETWEEN '2025-08-15' AND '2025-09-15'\nORDER BY d.date, q.region, q.sub_product;",
+        "instruction_type": "SQL_INSTRUCTION"
+      },
+      {
+        "title": "Weekly Region/Sub-Product Mix of Issues",
+        "content": "-- Weekly grouped comparison for duplicates and mapping issues\nSELECT week_start,\n       region,\n       sub_product,\n       weekly_identifier_conflicts,\n       weekly_duplicate_candidates,\n       weekly_mapping_issues\nFROM demo_generator.saswata_sengupta_agenticmdm.gold_master_quality_weekly\nWHERE week_start BETWEEN TIMESTAMP('2025-08-18') AND TIMESTAMP('2025-09-15')\nORDER BY week_start, region, sub_product;",
+        "instruction_type": "SQL_INSTRUCTION"
+      },
+      {
+        "title": "Lineage Completeness Trends",
+        "content": "-- Track lineage completeness % by region and sub_product\nSELECT date,\n       region,\n       sub_product,\n       lineage_completeness_pct\nFROM demo_generator.saswata_sengupta_agenticmdm.gold_lineage_completeness_timeseries\nWHERE date BETWEEN '2025-08-15' AND '2025-09-15'\nORDER BY date, region, sub_product;",
+        "instruction_type": "SQL_INSTRUCTION"
+      },
+      {
+        "title": "Vendor Change Log Alignment",
+        "content": "-- Align dated vendor changes to observed spikes\nSELECT change_date,\n       vendor,\n       change_type,\n       scope_region,\n       module,\n       notes,\n       error_codes\nFROM demo_generator.saswata_sengupta_agenticmdm.gold_vendor_change_log\nWHERE (vendor IN ('bloomberg','moody\\'s','internal-mdm'))\n  AND scope_region = 'Emea'\n  AND change_date BETWEEN TIMESTAMP('2025-08-15') AND TIMESTAMP('2025-09-15')\nORDER BY change_date;",
+        "instruction_type": "SQL_INSTRUCTION"
+      },
+      {
+        "title": "Misclassified Exposure and Cumulative Impact",
+        "content": "-- Daily and cumulative misclassified exposure views\n-- Daily\nSELECT date, region, sub_product, misclassified_exposure_usd\nFROM demo_generator.saswata_sengupta_agenticmdm.gold_exposure_impact\nWHERE date BETWEEN '2025-08-20' AND '2025-09-12'\nORDER BY date, region, sub_product;\n-- Cumulative\nSELECT date, region, sub_product, running_total_misclassified_usd\nFROM demo_generator.saswata_sengupta_agenticmdm.gold_exposure_impact_cumulative\nWHERE date BETWEEN '2025-08-01' AND '2025-09-30'\nORDER BY date, region, sub_product;",
+        "instruction_type": "SQL_INSTRUCTION"
+      },
+      {
+        "title": "Steward Overrides and Rationales",
+        "content": "-- Identify steward comments linked to master records and reasons\nSELECT s.date,\n       s.region,\n       c.comment_id,\n       c.attribute_name,\n       c.old_value,\n       c.new_value,\n       c.user_id,\n       c.approval_status,\n       c.reason_code,\n       s.sub_product\nFROM demo_generator.saswata_sengupta_agenticmdm.silver_steward_commentary c\nJOIN demo_generator.saswata_sengupta_agenticmdm.silver_security_master_ingest s\n  ON c.source_record_hash = s.source_record_hash\nWHERE c.date BETWEEN '2025-08-20' AND '2025-09-12'\n  AND s.region = 'EMEA'\nORDER BY c.date, c.comment_id;",
+        "instruction_type": "SQL_INSTRUCTION"
+      }
+    ]
+  },
+  "dashboards": {
+    "mdm_quality_monitoring": {
+      "title": "MDM Quality, Lineage, and Exposure Impact",
+      "id": "01f0bb6656f61fa8a278a3290ff68313"
+    }
+  }
+}

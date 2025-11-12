@@ -1,0 +1,92 @@
+bundle:
+  name: ai_demo_generator_demo_AgenticMDM
+variables:
+  project_name:
+    description: AI Demo Generator Project
+    default: AgenticMDM
+  warehouse_name:
+    description: Name of the SQL warehouse to use
+    default: Shared Unity Catalog Serverless
+  warehouse_id:
+    lookup:
+      warehouse: ${var.warehouse_name}
+  environment:
+    description: Deployment environment
+    default: dev
+  workspace_path:
+    description: Workspace path where bundle files will be synced
+    default: /Users/saswata.sengupta@databricks.com/AgenticMDM
+workspace:
+  file_path: ${var.workspace_path}
+sync:
+  include:
+  - agent_bricks_service.py
+  - utils.py
+  - generate_data.py
+  - transformations.sql
+  - dashboard_mdm_quality_monitoring.lvdash.json
+  - pdf/**
+  - deploy_resources.py
+  - bricks_conf.json
+targets:
+  dev:
+    default: true
+    mode: production
+    workspace:
+      root_path: ${var.workspace_path}/.bundle/${bundle.name}
+resources:
+  jobs:
+    demo_workflow:
+      name: '[DEMOGEN] - ${var.project_name} - Data Generation and Transformation'
+      tasks:
+      - task_key: generate_data
+        spark_python_task:
+          python_file: ./generate_data.py
+          source: WORKSPACE
+        environment_key: default
+        max_retries: 1
+      - task_key: sql_transformations
+        depends_on:
+        - task_key: generate_data
+        sql_task:
+          file:
+            path: ./transformations.sql
+          warehouse_id: ${var.warehouse_id}
+        max_retries: 1
+      - task_key: deploy_agent_bricks
+        depends_on:
+        - task_key: sql_transformations
+        spark_python_task:
+          python_file: ./deploy_resources.py
+          source: WORKSPACE
+        environment_key: default
+        max_retries: 1
+      environments:
+      - environment_key: default
+        spec:
+          client: '3'
+          dependencies:
+          - faker>=19.0.0
+          - holidays>=0.35
+          - databricks-sdk>=0.18.0
+  schemas:
+    demo_schema:
+      name: saswata_sengupta_agenticmdm
+      catalog_name: demo_generator
+      comment: Schema for AgenticMDM demo
+  volumes:
+    raw_data_volume:
+      name: raw_data
+      catalog_name: demo_generator
+      schema_name: saswata_sengupta_agenticmdm
+      volume_type: MANAGED
+      comment: Volume for AgenticMDM raw data and artifacts
+  dashboards:
+    mdm_quality_monitoring:
+      display_name: ${var.project_name} - MDM Quality, Lineage, and Exposure Impact
+      file_path: ./dashboard_mdm_quality_monitoring.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+artifacts:
+  pdf_files:
+    files:
+    - source: ./pdf/**/*
