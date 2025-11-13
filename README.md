@@ -68,7 +68,7 @@ The workflow will:
 ### Agent Bricks
 This bundle includes AI agent resources:
 
-- **Genie Space** (ID: `01f0bb66052f112c81ee17e9115c3149`)
+- **Genie Space** 
   - Natural language interface for data exploration
   - Configured with table identifiers from your catalog/schema
   - Sample questions and instructions included
@@ -87,9 +87,9 @@ This bundle includes PDF documents that will be uploaded to the workspace:
 ## Configuration
 
 ### Unity Catalog
-- **Catalog**: `demo_generator`
-- **Schema**: `saswata_sengupta_agenticmdm`
-- **Workspace Path**: `/Users/saswata.sengupta@databricks.com/AgenticMDM`
+- **Catalog**: `change to your catalog`
+- **Schema**: `change to your schema`
+- **Workspace Path**: `change to your path`
 
 ### Customization
 You can modify the bundle by editing `databricks.yml`:
@@ -140,8 +140,7 @@ Simply run `databricks bundle deploy` in any workspace where you have the requir
 - Check the generated code in this bundle for implementation details
 - Contact your Databricks workspace administrator for permissions issues
 
-## Generated with AI Demo Generator
-🤖 This bundle was automatically created using the Databricks AI Demo Generator.
+
 
 **Created**: 2025-11-06 15:37:45
 **User**: saswata.sengupta@databricks.com
