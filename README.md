@@ -4,7 +4,6 @@
 The Chief Data Officer of Northbridge Financial, a multi-asset investment management firm, is building an Agentic MDM to unify market and security master records from FactSet, Moody's, and Bloomberg. Between 2025-08-18 and 2025-09-12, a surge of conflicting equity identifiers (CUSIP/ISIN/SEDOL) and sub-product mappings (share classes, ADRs) increased duplicate and mismatched master entries by ~2.8x, notably for EMEA ADRs and ETFs. A dated vendor taxonomy update (Bloomberg ticker schema 2025-08-19) and Moody's sector reclassification (2025-08-25) misaligned with Northbridge rules, leading to lineage breaks and commentary disputes. The Agentic MDM resolves matches via golden record consolidation, standardizes identifiers, preserves lineage, and exposes commentary trails. Dashboards show the anomaly in master data quality, the mix driving it, the dated root cause, and business impact via downstream reporting accuracy and risk exposure.
 
 ![alt text]( https://github.com/saswata30/Agentic_MDM/blob/main/Images/Agentic_MDM_Dashboard_1.png?raw=true)
-
 ![alt text]( https://github.com/saswata30/Agentic_MDM/blob/main/Images/Agentic_MDM_Dashboard.png?raw=true)
 
 
