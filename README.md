@@ -5,7 +5,6 @@ The Chief Data Officer of Northbridge Financial, a multi-asset investment manage
 
 ![alt text](https://github.com/saswata30/Agentic_MDM/edit/main/README.md#:~:text=Agentic_MDM_Dashboard_1?raw=true)
 
-![alt text](https://github.com/saswata30/Agentic_MDM/edit/main/README.md#:~:text=Agentic_MDM_Dashboard_1?raw=true)
 
 ## Deployment
 
